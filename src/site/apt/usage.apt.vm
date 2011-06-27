@@ -1,0 +1,350 @@
+ ------
+ Usage
+ ------
+ Johnny R. Ruiz III
+ Allan Ramirez
+ Dennis Lundberg
+ ------
+ 2011-05-31
+ ------
+
+ ~~ Licensed to the Apache Software Foundation (ASF) under one
+ ~~ or more contributor license agreements.  See the NOTICE file
+ ~~ distributed with this work for additional information
+ ~~ regarding copyright ownership.  The ASF licenses this file
+ ~~ to you under the Apache License, Version 2.0 (the
+ ~~ "License"); you may not use this file except in compliance
+ ~~ with the License.  You may obtain a copy of the License at
+ ~~
+ ~~   http://www.apache.org/licenses/LICENSE-2.0
+ ~~
+ ~~ Unless required by applicable law or agreed to in writing,
+ ~~ software distributed under the License is distributed on an
+ ~~ "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ ~~ KIND, either express or implied.  See the License for the
+ ~~ specific language governing permissions and limitations
+ ~~ under the License.
+
+ ~~ NOTE: For help with the syntax of this file, see:
+ ~~ http://maven.apache.org/doxia/references/apt-format.html
+
+
+Usage
+
+ This plugin is used to create a Changes Report, a JIRA Report and an
+ Announcement text file. It is also able to send the announcement via email.
+
+
+*How to Generate the Changes Report
+
+ In order to use this goal, simply create a <<<changes.xml>>> file in the <<<src/changes/>>> directory.
+ Here's an example of a typical <<<changes.xml>>>, showing the syntax:
+
+-------------------
+<document xmlns="http://maven.apache.org/changes/1.0.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/changes/1.0.0 http://maven.apache.org/xsd/changes-1.0.0.xsd">
+  <properties>
+    <title>Changes Tester Project</title>
+    <author email="jruiz@exist.com">Johnny R. Ruiz III</author>
+  </properties>
+  <body>
+    <release version="1.1" date="2005-03-01" description="Subsequent release">
+      <action dev="jruiz" type="add">
+        Added additional documentation on how to configure the plugin.
+      </action>
+      <action dev="aramirez" type="fix" issue="MPJIRA-11">
+        Enable retrieving component-specific issues.
+      </action>
+      <action dev="jruiz" type="remove" due-to="Allan Ramirez" due-to-email="aramirez@exist.com">
+        The element type " link " must be terminated by the matching end-tag.
+        Deleted the erroneous code.
+      </action>
+    </release>
+
+    <release version="1.0" date="2005-01-01" description="First release">
+      <action dev="jruiz" type="update">
+        Uploaded documentation on how to use the plugin.
+      </action>
+    </release>
+  </body>
+</document>
+-------------------
+
+ See the {{{./changes.html}Changes Reference}} for details regarding the
+ <<<\<release\>>>> and <<<\<action\>>>> elements and their attributes.
+
+ To generate the Changes Report, insert the Changes Plugin in the
+ <<<\<reporting\>>>> section of your project's <<<pom.xml>>>
+
+-------------------
+<project>
+  ...
+  <reporting>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-changes-plugin</artifactId>
+        <version>${project.version}</version>
+        <reportSets>
+          <reportSet>
+            <reports>
+              <report>changes-report</report>
+            </reports>
+          </reportSet>
+        </reportSets>
+      </plugin>
+    </plugins>
+  </reporting>
+  ...
+</project>
+-------------------
+
+  and execute the <<<site>>> phase to generate the report.
+
+-------------------
+mvn site
+-------------------
+
+** Linking to Your Issue Management System
+
+  If you use the <<<issue>>> attribute in your <<<changes.xml>>> file and have
+  the <<<\<issueManagement\>>>> element configured in your <<<pom.xml>>>, the
+  report will contain links to the issues in your issue management system.
+
+  Starting with version 2.4 the plugin comes pre-configured for a whole bunch of
+  different issue management systems. All you have to to is enter your issue
+  management system and the URL to it in your POM. It can look like this:
+
+-----
+<project>
+  ...
+  <issueManagement>
+    <system>JIRA</system>
+    <url>http://jira.company.com/</url>
+  </issueManagement>
+  ...
+</project>
+-----
+
+  If you have a previous configuration for <<<\<issueLinkTemplatePerSystem\>>>>
+  in your POM, you can probably throw that away when you start using version 2.4,
+  unless you use more than one issue management system.
+
+  The following table shows the pre-configured issue management systems and the
+  templates they use to create links from your Changes Report directly to the
+  issues in your issue management system.
+
+*---------------+--------------------------------------------------------+
+| <<System>>    | <<Issue Link Template>>                                |
+*---------------+--------------------------------------------------------+
+| Bitbucket     | %URL%/issue/%ISSUE%                                    |
+*---------------+--------------------------------------------------------+
+| Bugzilla      | %URL%/show_bug.cgi?id=%ISSUE%                          |
+*---------------+--------------------------------------------------------+
+| GitHub        | %URL%/%ISSUE%                                          |
+*---------------+--------------------------------------------------------+
+| GoogleCode    | %URL%/detail?id=%ISSUE%                                |
+*---------------+--------------------------------------------------------+
+| JIRA          | %URL%/%ISSUE%                                          |
+*---------------+--------------------------------------------------------+
+| Mantis        | %URL%/view.php?id=%ISSUE%                              |
+*---------------+--------------------------------------------------------+
+| MKS Integrity | %URL%/viewissue?selection=%ISSUE%                      |
+*---------------+--------------------------------------------------------+
+| Redmine       | %URL%/issues/show/%ISSUE%                              |
+*---------------+--------------------------------------------------------+
+| Scarab        | %URL%/issues/id/%ISSUE%                                |
+*---------------+--------------------------------------------------------+
+| SourceForge   | http://sourceforge.net/support/tracker.php?aid=%ISSUE% |
+*---------------+--------------------------------------------------------+
+| Trac          | %URL%/ticket/%ISSUE%                                   |
+*---------------+--------------------------------------------------------+
+| Trackplus     | %URL%/printItem.action?key=%ISSUE%                     |
+*---------------+--------------------------------------------------------+
+| YouTrack      | %URL%/issue/%ISSUE%                                    |
+*---------------+--------------------------------------------------------+
+
+  If you use an issue management system other than the ones above, you need to
+  {{{./changes-report-mojo.html#issueLinkTemplatePerSystem}configure an issue
+  link template for it}}.
+  We would love to extend the table above with more issue management systems,
+  so if you have a working configuration that is not listed above, please tell
+  us about it by {{{./issue-tracking.html}creating an issue for it}}.
+
+  <<Note:>> Make sure that your <<<\<issueManagement\>/\<url\>>>> is
+  correct. In particular, make sure that it has a trailing slash if it needs one.
+  The plugin can't add this for you, because it needs to handle different issue
+  management systems. If your issue management system is at
+  <<<http://www.company.com/bugzilla/>>>
+  the links will not work if you enter <<<http://www.company.com/bugzilla>>>
+  in your <<<pom.xml>>>.
+
+
+*How to Generate the JIRA Report
+
+  <<Note:>> To use the JIRA Report, the <<<\<issueManagement\>>>> section in
+  the <<<pom.xml>>> of your project must be configured. It might look something
+  like this:
+
+-------------------
+<project>
+  ...
+  <issueManagement>
+    <system>JIRA</system>
+    <url>http://jira.codehaus.org/BrowseProject.jspa?id=10450</url>
+  </issueManagement>
+  ...
+</project>
+-------------------
+
+  To generate the JIRA Report, insert the Changes Plugin in the
+  <<<\<reporting\>>>> section of your project's <<<pom.xml>>>
+
+-------------------
+<project>
+  ...
+  <reporting>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-changes-plugin</artifactId>
+        <version>${project.version}</version>
+        <reportSets>
+          <reportSet>
+            <reports>
+              <report>jira-report</report>
+            </reports>
+          </reportSet>
+        </reportSets>
+      </plugin>
+    </plugins>
+  </reporting>
+  ...
+</project>
+-------------------
+
+  and execute the site goal to generate the report.
+
+-------------------
+mvn site
+-------------------
+
+  For info on how to modify the JIRA Report see the
+  {{{./examples/customizing-jira-report.html}Customizing the JIRA Report}}
+  example.
+
+
+*How to generate and send the Announcement via Email
+
+  As usual we start by configuring your project's <<<pom.xml>>>. We add a basic
+  configuration for sending emails and specify the lucky recipients of the
+  announcement emails.
+
+  For info on how to change the sender of the email see the
+  {{{./examples/specifying-mail-sender.html}Specifying the mail sender}} example.
+  
+  If you have customizations for JIRA that add additional issue types,
+  or if you are using an IMS that isn't fully-supported in this plugin,
+  you will need to configure any additional issue types here.
+  
+  For each issue type, you have to map it to one of three action types:
+  <add>, <fix>, or <update>. These terms are a bit arbitrary. By default, for JIRA,
+  <add> corresponds to 'New Feature', <fix> corresponds to 'Bug', and <update>
+  corresponds to 'Improvement'.
+
+-------------------
+<project>
+  ...
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-changes-plugin</artifactId>
+        <version>${project.version}</version>
+        <configuration>
+          ...
+          <smtpHost>mail.yourhost.com</smtpHost>
+          <smtpPort implementation="java.lang.Integer">25</smtpPort>
+          <toAddresses>
+            <toAddress implementation="java.lang.String">someones@email.com</toAddress>
+            <toAddress implementation="java.lang.String">anothersomeone@email.com</toAddress>
+          </toAddresses>
+          ...
+          <issueTypes>
+	        <add>Story</add>
+          	<fix>Defect, Malfunction</fix>
+          </issueTypes>
+          ...
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+  ...
+</project>
+-------------------
+
+  You can now generate the announcement by executing the command below:
+
+-------------------
+mvn changes:announcement-generate
+-------------------
+
+  If you want to generate the announcement based on JIRA you need to
+  configure that in your <<<pom.xml>>>, like this:
+
+-------------------
+<project>
+  ...
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-changes-plugin</artifactId>
+        <version>${project.version}</version>
+        <configuration>
+          ...
+          <issueManagementSystems>
+            <issueManagementSystem>JIRA</issueManagementSystem>
+          </issueManagementSystems>
+          ...
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+  ...
+</project>
+-------------------
+
+  To generate the announcement based on <<both>> a <<<changes.xml>>> file and JIRA
+  you should configure your <<<pom.xml>>> like this:
+
+-------------------
+<project>
+  ...
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-changes-plugin</artifactId>
+        <version>${project.version}</version>
+        <configuration>
+          ...
+          <issueManagementSystems>
+            <issueManagementSystem>changes.xml</issueManagementSystem>
+            <issueManagementSystem>JIRA</issueManagementSystem>
+          </issueManagementSystems>
+          ...
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+  ...
+</project>
+-------------------
+
+  This is how you send an email with the generated announcement:
+
+-------------------
+mvn changes:announcement-mail
+-------------------
